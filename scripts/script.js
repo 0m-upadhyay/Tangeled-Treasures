@@ -284,26 +284,17 @@ whatsappBtn.href = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messa
 
 /* ==========================================
    PRODUCT CARD SCROLL ANIMATION
-   OLD INDIVIDUAL CARD ANIMATION
 ========================================== */
 
 function createProductCardAnimations() {
   const productCards = document.querySelectorAll(".product-card");
 
   productCards.forEach((card) => {
-    /*
-      Initial state:
-      slightly lower + invisible
-    */
 
     gsap.set(card, {
       opacity: 0,
       y: 50,
     });
-
-    /*
-      Scroll-controlled animation
-    */
 
     gsap.to(card, {
       opacity: 1,
@@ -314,47 +305,17 @@ function createProductCardAnimations() {
       scrollTrigger: {
         trigger: card,
 
-        /*
-          Animation starts when
-          card enters viewport
-        */
         start: "top 90%",
 
-        /*
-          Animation finishes
-          around the middle of viewport
-        */
         end: "top 50%",
 
-        /*
-          Scroll controls animation.
-          Scroll down → appear
-          Scroll up → disappear
-        */
         scrub: 1,
 
-        /*
-          Important for responsive layouts.
-        */
         invalidateOnRefresh: true,
       },
     });
   });
-
-  /*
-    Refresh after creating
-    all product triggers.
-  */
-
-  ScrollTrigger.refresh();
 }
-
-/*
-  Wait until everything has loaded.
-
-  This is especially important because
-  product images affect card positions.
-*/
 
 if (document.readyState === "complete") {
   createProductCardAnimations();
@@ -363,20 +324,6 @@ if (document.readyState === "complete") {
     once: true,
   });
 }
-
-/* ==========================================
-   MOBILE / RESPONSIVE REFRESH
-========================================== */
-
-let productRefreshTimer;
-
-window.addEventListener("resize", () => {
-  clearTimeout(productRefreshTimer);
-
-  productRefreshTimer = setTimeout(() => {
-    ScrollTrigger.refresh();
-  }, 250);
-});
 
 /* ==========================================
    STORY SECTION
@@ -400,70 +347,69 @@ gsap.to(".story-intro .hl-word", {
     start: "top 80%",
     end: "top 20%",
     scrub: 1,
+    invalidateOnRefresh: true,
   },
 });
+
+let mm = gsap.matchMedia();
 
 document.querySelectorAll(".story-item").forEach((item) => {
   const image = item.querySelector(".story-item-image");
   const heading = item.querySelector(".story-item-heading");
   const words = item.querySelectorAll(".hl-word");
 
-  const isMobile = window.matchMedia("(max-width: 700px)").matches;
-  const fromSide = isMobile ? 0 : item.classList.contains("item-right") ? 80 : -80;
+  mm.add(
+    { isDesktop: "(min-width: 701px)", isMobile: "(max-width: 700px)" },
+    (context) => {
+      const { isMobile } = context.conditions;
+      const fromSide = isMobile ? 0 : item.classList.contains("item-right") ? 80 : -80;
 
-  gsap.set(image, { opacity: 0, x: fromSide });
-  gsap.set(heading, { opacity: 0, y: 25 });
-  gsap.set(words, { color: "rgba(38, 31, 22, 0.25)" });
+      const tl = gsap.timeline({
+        scrollTrigger: isMobile
+          ? {
+              trigger: item,
+              start: "top 80%",
+              end: "top 30%",
+              scrub: 1,
+              invalidateOnRefresh: true,
+            }
+          : {
+              trigger: item,
+              start: "top top",
+              end: () => `+=${item.offsetHeight + 300}`,
+              scrub: 1,
+              pin: true,
+              pinSpacing: true,
+              invalidateOnRefresh: true,
+            },
+      });
 
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: item,
-      start: "top top",
-      end: () => `+=${item.offsetHeight + 300}`,
-      scrub: 1,
-      pin: true,
-      pinSpacing: true,
-      invalidateOnRefresh: true,
-    },
-  });
-
-  tl.to(image, { opacity: 1, x: 0, duration: 1 })
-    .to(heading, { opacity: 1, y: 0, duration: 0.7 })
-    .to(words, { color: "#261f16", stagger: 0.05, duration: 1 });
+      tl.from(image, { opacity: 0, x: fromSide, duration: 1 })
+        .from(heading, { opacity: 0, y: 25, duration: 0.7 }, "-=0.3")
+        .to(words, { color: "#261f16", stagger: 0.05, duration: 1 });
+    }
+  );
 });
-
 
 /* ==========================================
    COLLECTION HEADING ANIMATION
 ========================================== */
 
-gsap.set(".collection-heading h2", {
-  opacity: 0,
-  y: 40,
-});
-
-gsap.set(".collection-heading p", {
-  opacity: 0,
-  y: 25,
-});
-
 gsap.timeline({
   scrollTrigger: {
     trigger: ".collection-heading",
     start: "top 85%",
-    toggleActions: "play reverse play reverse",
+    toggleActions: "play none none none",
+    invalidateOnRefresh: true,
+    once: true,
   },
 })
-  .to(".collection-heading h2", { opacity: 1, y: 0, duration: 1, ease: "power2.out" })
-  .to(".collection-heading p", { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, "-=0.4");
-
-
+  .from(".collection-heading h2", { opacity: 0, y: 40, duration: 1, ease: "power2.out" })
+  .from(".collection-heading p", { opacity: 0, y: 25, duration: 0.7, ease: "power2.out" }, "-=0.4")
 
 /* ==========================================
    REVIEW SECTION ANIMATION
 ========================================== */
-
-gsap.set(".reviews-heading", { opacity: 0 });
 
 gsap.timeline({
   scrollTrigger: {
@@ -471,22 +417,27 @@ gsap.timeline({
     start: "top 90%",
     end: "top 10%",
     scrub: 1,
+    invalidateOnRefresh: true,
+    immediateRender: true,
   },
 })
-  .to(".reviews-heading", { opacity: 1, duration: 1 })
+  .from(".reviews-heading", { opacity: 0, duration: 1 })
   .to(".reviews-heading", { opacity: 1, duration: 1 })
   .to(".reviews-heading", { opacity: 0, y: -40, duration: 1 });
 
-document.querySelectorAll(".review-card").forEach((card) => {
-  gsap.set(card, { opacity: 0 });
+/* ==========================================
+   REVIEWS ANIMATION
+========================================== */
 
-  gsap.to(card, {
-    opacity: 1,
+document.querySelectorAll(".review-card").forEach((card) => {
+  gsap.from(card, {
+    opacity: 0,
     scrollTrigger: {
       trigger: card,
       start: "top 85%",
       end: "top 45%",
       scrub: 1,
+      invalidateOnRefresh: true,
     },
   });
 });
@@ -495,27 +446,34 @@ document.querySelectorAll(".review-card").forEach((card) => {
    FOOTER ANIMATION
 ========================================== */
 
-gsap.set(".footer-meadow-back", { opacity: 0, scale: 1.1 });
-gsap.set(".footer-meadow-front", { opacity: 0, y: 40 });
-gsap.set(".footer-content > *", { opacity: 0, y: 25 });
-
 gsap.timeline({
   scrollTrigger: {
     trigger: ".site-footer",
     start: "top 75%",
     toggleActions: "play none none reverse",
+    invalidateOnRefresh: true,
   },
 })
-  .to(".footer-meadow-back", { opacity: 1, scale: 1, duration: 1.4, ease: "power2.out" })
-  .to(".footer-meadow-front", { opacity: 1, y: 0, duration: 1.2, ease: "power2.out" }, "-=1")
-  .to(".footer-content > *", { opacity: 1, y: 0, duration: 0.7, stagger: 0.12, ease: "power2.out" }, "-=0.6");
+  .from(".footer-meadow-back", { opacity: 0, scale: 1.1, duration: 1.4, ease: "power2.out" })
+  .from(".footer-meadow-front", { opacity: 0, y: 40, duration: 1.2, ease: "power2.out" }, "-=1")
+  .from(".footer-content > *", { opacity: 0, y: 25, duration: 0.7, stagger: 0.12, ease: "power2.out" }, "-=0.6");
 
 /* ==========================================
-   FINAL SCROLLTRIGGER REFRESH
+   SINGLE, DEBOUNCED SCROLLTRIGGER REFRESH
 ========================================== */
 
-window.addEventListener("load", () => {
-  setTimeout(() => {
+let refreshTimer;
+
+function safeRefresh() {
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => {
     ScrollTrigger.refresh();
-  }, 1000);
+  }, 300);
+}
+
+window.addEventListener("load", safeRefresh);
+document.fonts.ready.then(safeRefresh);
+
+ScrollTrigger.config({
+  ignoreMobileResize: true,
 });
